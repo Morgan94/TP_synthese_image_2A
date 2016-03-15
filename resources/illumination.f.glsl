@@ -40,14 +40,23 @@ vec3 getCartoonColor(const in vec3 lightcolor, const in float nDotL)
 vec3 ComputeLightLambert(const in vec3 lightdirn, const in vec3 lightcolor, const in vec3 normal, const in vec3 mydiffuse)/*{{{*/
 {
     /*!todo exercise 1: Implement the diffuse (Lambertian) illumination model*/
-    return vec3(0,0,0);
+
+   float diff = max(dot(lightdirn, normal),0.0);
+   vec3 I = diff * mydiffuse * lightcolor; 
+   
+   return I;
 }/*}}}*/
 
 
 vec3 ComputeLightSpecular (const in vec3 lightdirn, const in vec3 lightcolor, const in vec3 normal, const in vec3 eyedirn, const in vec3 myspecular, const in float myshininess) /*{{{*/
 {
     /*!todo exercise 3: Implement the specular (Blinn-Phong) illumination model*/
-    return vec3(0,0,0);
+    vec3 H = normalize(lightdirn + eyedirn);
+    float specAngle = max(dot(H, normal), 0.0);
+    float spec = pow(specAngle, myshininess);
+    vec3 L = spec * myspecular * lightcolor;
+    return L;
+
 }/*}}}*/
 
 void main()
@@ -59,6 +68,9 @@ void main()
         /*{{{*//*!todo exercise 5: Compute the normal for bump mapping
          * 1) read in the normalmap the value of the normal expressed in the tangent space
          * 2) express it in the eye coordinate frame*/
+        
+         vec4 bumpNormal = texture(normalmap, uv);
+		 vec3 fragNormal = 2.0 * bumpNormal.rgb - vec3(1.0);    
         /*}}}*/
     }
     fragNormal = normalize(fragNormal); 
@@ -66,7 +78,11 @@ void main()
     vec3 lambert = ComputeLightLambert(lightdirn, lightcolor, fragNormal, diffuse);
 
     /*!todo exercise 3: Compute the eye direction for the Phong model*//*{{{*/
-    vec3 eyedirn = vec3(0,0,0);
+    const vec3 eyepos = vec3(0,0,0);
+    vec3 vPos = vec3(position);
+    vec3 eyedirn = eyepos - vPos;
+    eyedirn = normalize(eyedirn);
+    
     /*}}}*/
     float myshininess=shininess*(.8+ sin(time) * 0.5f);
     if(exercise>=5)

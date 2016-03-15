@@ -205,7 +205,7 @@ void draw()/*{{{*/
     glDepthFunc(GL_LESS);
     if(controls.exercise>=1){/*{{{*/
         GLuint textureId=scene.materials["dice"].uniformSamplers["dicetexture"];
-        ensi::gl::Program prog=scene.materials["dice"].program;
+        ensi::gl::Program prog = scene.materials["dice"].program;
         /*!todo exercise 1: set up the texture sampler for the dice program 
          *
          * Before doing anything else, don't forget first to fill in the code of
@@ -221,6 +221,27 @@ void draw()/*{{{*/
          * Once all this is done, the two cubes should be mapped with textures
          * of a dice pattern (with digits from 1 to 6)
          * */
+
+
+        // activate the texture unit (here GL_TEXTURE_0)
+           GLuint textureUnit=0;
+           glActiveTexture(GL_TEXTURE0+textureUnit);
+           // bind the texture
+           GLenum target = GL_TEXTURE_2D;
+           glBindTexture(target, textureId);
+
+           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+
+           // associate the chosen texture unit to the GLSL sampler
+           // see the GLSL declaration (uniform sampler2D colormap;
+           GLuint samplerLocation = glGetUniformLocation(prog.progid,"colormap");
+           glUseProgram(prog.progid);
+           glUniform1i(samplerLocation,textureUnit);
+           glUseProgram(0);
+
+
+
     }/*}}}*/
     if(controls.exercise>=1)/*{{{*/
     {
@@ -237,23 +258,33 @@ void draw()/*{{{*/
         scene.drawObject("cube","simple");
     }/*}}}*/
     GLuint checkerboardTextureLoc=scene.materials["checkerboard"].uniformSamplers["colormap"];
+
     if(controls.exercise>=3)/*{{{*/
     {
         /*!todo exercise 3: generate mipmaps and activate them for the min filter*/
+        GLenum target = GL_TEXTURE_2D;
+        glBindTexture(target,checkerboardTextureLoc);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         if(controls.exercise>=4)
         {
             /*!todo exercise 4: set up anisotropic filtering (using GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT)*/
+            GLfloat maxAniso = 0.0f;
+            glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,maxAniso);
         }
         else
         {
             /*!todo exercise 4: disable anisotropic filtering*/
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,1);
         }
 
     }
     else
     {
         glBindTexture(GL_TEXTURE_2D, checkerboardTextureLoc);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     }/*}}}*/
     if(controls.exercise>=1)
         scene.drawObject("plane","checkerboard");
@@ -291,7 +322,14 @@ void makeACubeMappedCube(ensi::gl::Mesh& cube, bool correct)/*{{{*/
     /*!todo exercise 2: Create the correct uv values to have each number mapped on one of the faces *//*{{{*/
     if(correct)
     {
-        uvs={ };                         
+        uvs={  glm::vec2(0.25,0.66), glm::vec2(0.5,0.66), glm::vec2(0.5,1.), glm::vec2(0.25,1.),// top
+               glm::vec2(0.25,0.), glm::vec2(0.5,0.), glm::vec2(0.5,0.33), glm::vec2(0.25,0.33),// bottom
+               glm::vec2(0.5,0.33), glm::vec2(0.75,0.33), glm::vec2(0.75,0.66), glm::vec2(0.5,0.66),// 2
+               glm::vec2(0,0.33), glm::vec2(0.25,0.33), glm::vec2(0.25,0.66), glm::vec2(0,0.66),// 5
+               glm::vec2(0.25,0.33), glm::vec2(0.5,0.33), glm::vec2(0.5,0.66), glm::vec2(0.25,0.66),// 1
+               glm::vec2(0.75,0.33), glm::vec2(1.0,0.33), glm::vec2(1.0,0.66), glm::vec2(0.75,0.66),// 6
+
+            };
     }
     /*}}}*/
     for (int i = 0; i < 24; ++i)
@@ -311,6 +349,30 @@ void makeACubeMappedCube(ensi::gl::Mesh& cube, bool correct)/*{{{*/
     cube.computeBSphere();
 }
 /*}}}*/
+
+void *file_contents(const char *filename, GLint *length)
+{
+    FILE *f = fopen(filename, "r");
+    void *buffer;
+
+    if (!f) {
+        fprintf(stderr, "Unable to open %s for reading\n", filename);
+        return NULL;
+    }
+
+    fseek(f, 0, SEEK_END);
+    *length = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    buffer = malloc(*length+1);
+    *length = fread(buffer, 1, *length, f);
+    fclose(f);
+    ((char*)buffer)[*length] = '\0';
+
+    return buffer;
+}
+
+
 
 //-------------------- GLFW Callbacks/*{{{*/
 void shutDown(int return_code)/*{{{*/

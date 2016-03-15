@@ -31,6 +31,12 @@ uniform float shininess;
 vec3 ComputeLightLambert(const in vec3 lightdirn, const in vec3 lightcolor, const in vec3 normal, const in vec3 mydiffuse)/*{{{*/
 {
     /*!todo exercise 1: Implement the diffuse (Lambertian) illumination model*/
+
+   float diff = max(dot(lightdirn, normal),0.0);
+   vec3 I = diff * mydiffuse * lightcolor; 
+   
+   return I;
+    
     return vec3(0,0,0);
 }/*}}}*/
 
@@ -38,7 +44,13 @@ vec3 ComputeLightLambert(const in vec3 lightdirn, const in vec3 lightcolor, cons
 vec3 ComputeLightSpecular (const in vec3 lightdirn, const in vec3 lightcolor, const in vec3 normal, const in vec3 eyedirn, const in vec3 myspecular, const in float myshininess) /*{{{*/
 {
     /*!todo exercise 3: Implement the specular (Phong) illumination model*/
-    return vec3(0,0,0);
+    
+    vec3 R = 2* dot(normal,lightdirn)*normal-lightdirn;
+    float spec = max(dot(R,eyedirn),0.0);
+    float P = pow(spec,myshininess);
+    vec3 I = lightcolor * myspecular * P;
+    
+    return I;
 }/*}}}*/
 
 void main()
@@ -59,7 +71,13 @@ void main()
         vec3 fragNormal = normal;
         fragNormal=normalize(fragNormal);
         /*!todo exercise 2: Compute the eye direction for the Phong model*//*{{{*/
-        vec3 eyedirn = vec3(0,0,0);
+        
+        
+        vec3 vPosCamera = vec3(position);
+        vec3 eyedirn = eyepos - vPosCamera;
+        eyedirn = normalize(eyedirn);
+        
+        
         /*}}}*/
         vec3 lambert = ComputeLightLambert(lightdirn, lightcolor, fragNormal, diffuse);
         float myshininess=shininess*(.8+ sin(time) * 0.5f);

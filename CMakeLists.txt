@@ -97,7 +97,7 @@ add_subdirectory(Minimal)
 add_subdirectory(Textures)
 add_subdirectory(Shading)
 # Game Example
-add_subdirectory(Game)
+#add_subdirectory(Game)
 copy_files("Game/RubikCube/resources/*.tga" ${CMAKE_BINARY_DIR} rubiktgafiles)
 copy_files("Game/RubikCube/resources/*.glsl" ${CMAKE_BINARY_DIR} rubikglslfiles)
 copy_files("Game/RubikCube/resources/*.obj" ${CMAKE_BINARY_DIR} rubikobjfiles)

@@ -26,6 +26,7 @@ ensi::gl::Controls controls(nbEx);
 
 //-------------------- MAIN /*{{{*/
 int main(void)/*{{{*/
+	
 {
     init();
     mainLoop();
@@ -152,7 +153,9 @@ int make_resources(void)/*{{{*/
     makeAColoredTorus(torus, 1, 0.25, 50);
     mw=controls.modelWorldMatrix.top();
     mw=glm::scale(mw, glm::vec3(2,2,2));
-    mw=glm::rotate(mw, glm::pi<float>()/4, glm::vec3(2,2,2));
+    //mw=glm::rotate(mw, glm::pi<float>()/4, glm::vec3(2,2,2));
+    
+    mw=glm::translate(mw,glm::vec3(0,0,-1));
     scene.addObject("torus", torus, mw);/*}}}*/
     /*}}}*/
     return 1;
@@ -164,16 +167,17 @@ void draw()/*{{{*/
 {
     ensi::gl::Scene& scene = ensi::gl::Scene::getInstance();
     // clear the buffer
-    glClear(GL_COLOR_BUFFER_BIT );
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(controls.exercise>=1)
     {
-        /*!todo exercise 1: Enable back face culling *//*{{{*/
-        /*}}}*/
+        // Active le back face culling pour que les face les plus proche de la caméra soit placer devant.
+		glEnable(GL_CULL_FACE);
     }
     if(controls.exercise>=3)
     {
-        /*!todo exercise 3: Enable depth test *//*{{{*/
-        /*}}}*/
+        // Activation du Z buffer
+        // Le Z buffer sert à déterminer la profondeur de la scene, pour gérer le placement des objets dans l'espace.
+        glEnable(GL_DEPTH_TEST);
     }
     scene.drawObject("cube","simple");
     if(controls.exercise>=2)
@@ -181,13 +185,12 @@ void draw()/*{{{*/
     checkGLerror();
     if(controls.exercise>=1)
     {
-        /*!todo exercise 1: Disable back face culling *//*{{{*/
-        /*}}}*/
+        glDisable(GL_CULL_FACE);
     }
     if(controls.exercise>=3)
     {
-        /*!todo exercise 3: Disable depth test *//*{{{*/
-        /*}}}*/
+        glDisable(GL_DEPTH_TEST);
+
     }
 }
 /*}}}*/
@@ -198,6 +201,7 @@ void makeAPerFaceColoredCube(ensi::gl::Mesh& cube)/*{{{*/
     using ensi::gl::Vertex;
     cube.m_verts.clear();
     cube.m_tris.clear();
+
     std::vector<glm::vec3> positions
     {
         glm::vec3(0,0,0), glm::vec3(1,0,0), glm::vec3(1,1,0), glm::vec3(0,1,0),
@@ -245,12 +249,73 @@ inline glm::vec3 torusNormal(double theta, double phi)/*{{{*/
     return glm::vec3 (cos(phi)*cos(theta), cos(phi)*sin(theta), sin(phi));
 }/*}}}*/
 
+float absf(float x)
+{
+    if(x<0.0)
+        return -x;
+    return x;
+}
+
 void makeAColoredTorus(ensi::gl::Mesh& torus, double R, double r, int nbBins)/*{{{*/
 {
+	
+	int N = nbBins*nbBins;
     using ensi::gl::Vertex;
     torus.m_verts.clear();
     torus.m_tris.clear();
     /*!todo exercise 2: build up a torus *//*{{{*/
+    
+    double pi = 3.14159;
+    double x,y,z;
+    double theta, phi;
+
+    
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec4> colors;
+    
+    for(int i=0 ; i<nbBins; i++){
+		
+		theta = (double)i/(double)nbBins*(2*pi);
+		
+		for(int j=0; j<nbBins ; j++){
+			
+			phi = (double)j/(double)nbBins*(2*pi);
+			positions.push_back(torusPoint(theta,phi,R,r));
+            colors.push_back(glm::vec4(1.5*sin(phi),1.5*(1-absf(sin(phi))),-1.5*sin(phi),1.0));
+		}
+		
+	}
+	
+
+   
+    /*=
+    {
+        glm::vec4(1,0,0,1),glm::vec4(1,0,0,1),glm::vec4(1,0,0,1),glm::vec4(1,0,0,1),
+        glm::vec4(1,1,0,1),glm::vec4(1,1,0,1),glm::vec4(1,1,0,1),glm::vec4(1,1,0,1),
+        glm::vec4(0,1,0,1),glm::vec4(0,1,0,1),glm::vec4(0,1,0,1),glm::vec4(0,1,0,1),
+        glm::vec4(0,1,1,1),glm::vec4(0,1,1,1),glm::vec4(0,1,1,1),glm::vec4(0,1,1,1),
+        glm::vec4(0,0,1,1),glm::vec4(0,0,1,1),glm::vec4(0,0,1,1),glm::vec4(0,0,1,1),
+        glm::vec4(1,0,1,1),glm::vec4(1,0,1,1),glm::vec4(1,0,1,1),glm::vec4(1,0,1,1),
+    };*/
+    std::vector<GLuint> ibo;
+    
+	for(int i=0; i<N ; i++){
+		
+		ibo.push_back(i%N);
+		ibo.push_back((i+nbBins+1)%N);
+		ibo.push_back((i+1)%N);
+		
+		ibo.push_back(i);
+		ibo.push_back((i+nbBins)%N);
+		ibo.push_back((i+nbBins+1)%N);
+	}
+		
+
+    for (int i = 0; i <N; ++i)
+    {
+        torus.m_verts.push_back(Vertex(positions[i], glm::vec3(), glm::vec2(),colors[i]));
+    }
+    torus.m_tris=ibo;
     /*}}}*/
 }/*}}}*/
 /*}}}*/

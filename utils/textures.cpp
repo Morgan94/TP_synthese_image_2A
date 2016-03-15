@@ -22,8 +22,25 @@ GLuint loadTGATexture(const std::string& imagepath, GLenum wrap_s, GLenum wrap_t
      *  4) Send this data to the GPU (glTexImage2D)
      *  5) Set up the Wrap and filter parameters. 
      *     */
+
     // Create one OpenGL texture
     GLuint textureID=0;
+
+    // Laoding in CPU
+    int width, height, depth;
+
+    const char * file = imagepath.c_str();
+    char* data = read_tga(file, width, height, depth );
+
+    // Uploading to GPU
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+
     // Return the ID of the texture we just created
     return textureID;
 }/*}}}*/
@@ -41,6 +58,7 @@ GLuint loadTGACubemap( std::string* faceNames, GLenum* faceTypes)/*{{{*/
      *     */
     // Create one OpenGL texture
     GLuint textureID=0;
+
     return textureID;
 }/*}}}*/
 

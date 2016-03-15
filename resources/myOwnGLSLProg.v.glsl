@@ -1,6 +1,7 @@
-#version 410
-/*!todo: Create a vertex shader
-  * Lab0: simple version
-  * Lab1: textured version
-  * Lab2: fancier version (shading, cartoon, ...)
-  */
+//---- simple.v.glsl
+#version 130
+in vec2 position;
+void main()
+{
+  gl_Position=vec4(position,0.0,1.0);
+}
